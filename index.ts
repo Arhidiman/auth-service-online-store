@@ -22,28 +22,7 @@ app.use(express.json()); // Обработка JSON-запросов
 app.use('/user', AuthRouter)
 
 
-const generateTokenPair = (data: {name: string}) => {
-    const accessToken = jwt.sign(
-        data,
-        config.atSecret,
-        { expiresIn: config.atLife }
-    )
-    const refreshToken = jwt.sign(
-        { atTokenHash: hash(accessToken) },
-        config.rtSecret,
-        { expiresIn: config.rtLife }
-    )
-    const tokensData = JSON.parse(fs.readFileSync('tokensData.json'))
-    tokensData[refreshToken] = {
-        accessToken,
-        data
-    }
-    fs.writeFileSync('tokensData.json', JSON.stringify(tokensData))
-    return {
-        accessToken,
-        refreshToken
-    }
-}
+
 
 app.use(cors({
     origin: originCors,

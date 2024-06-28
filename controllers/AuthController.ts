@@ -1,7 +1,38 @@
-import {Request, Response} from "express";
 const crypto = require('crypto')
+import fs from "fs";
+
 const jwt = require('jsonwebtoken')
-import {usersModel} from "../models/UsersModel.ts";
+import type {Request, Response} from "express";
+
+import {usersModel} from "../models/UsersModel.ts"
+import {jwtConfig} from '../jwtConfig.ts'
+
+const hash = (s: string) => {
+    return crypto.createHash('sha256').update(s).digest('hex')
+}
+
+const generateTokenPair = (data: {name: string}) => {
+    const accessToken = jwt.sign(
+        data,
+        jwtConfig.atSecret,
+        { expiresIn: jwtConfig.atLife }
+    )
+    const refreshToken = jwt.sign(
+        { atTokenHash: hash(accessToken) },
+        jwtConfig.rtSecret,
+        { expiresIn: jwtConfig.rtLife }
+    )
+    const tokensData = JSON.parse(fs.readFileSync(__dirname+'/tokensData.json').toString())
+    tokensData[refreshToken] = {
+        accessToken,
+        data
+    }
+    fs.writeFileSync('tokensData.json', JSON.stringify(tokensData))
+    return {
+        accessToken,
+        refreshToken
+    }
+}
 
 export class AuthController {
 
@@ -36,6 +67,11 @@ export class AuthController {
         await usersModel.createUser(name, password)
 
         res.status(201).send({message: `user ${name} authenticated successfully`})
+        const { accessToken, refreshToken } = generateTokenPair({name})
+
+
+        console.log(accessToken, 'accessToken')
+        console.log(refreshToken, 'refreshToken')
 
         // const existedUser = parsedUsers.find((user)=>
         //     user.name === authUser.name

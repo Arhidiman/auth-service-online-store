@@ -5,5 +5,5 @@ export const AuthRouter: Router = Router()
 
 const authController = new AuthController()
 
-AuthRouter.post('/auth', authController.authenticate)
-AuthRouter.get('/create', authController.register)
+AuthRouter.get('/auth', authController.authenticate)
+AuthRouter.post('/create', authController.register)

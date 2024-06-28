@@ -38,10 +38,15 @@ export class AuthController {
 
     async register(req: Request, res: Response) {
         const {name, password} = req.body
+        const { accessToken, refreshToken } = generateTokenPair({name})
 
-        res.status(200).send(`user ${name} registered successfully.`)
+        await usersModel.createUser(name, password, accessToken)
 
-        await usersModel.createUser(name, password)
+        res.status(201).send({message: `user ${name} created successfully`})
+
+
+        console.log(accessToken, 'accessToken')
+        console.log(refreshToken, 'refreshToken')
 
         // const existedUser = parsedUsers.find((user)=>user.name === newUser.name)
         // if(!existedUser) {
@@ -64,10 +69,13 @@ export class AuthController {
 
     async authenticate(req: Request, res: Response) {
         const {name, password} = req.body
-        await usersModel.createUser(name, password)
+        const { accessToken, refreshToken } = generateTokenPair({name})
+
+        const userData = await usersModel.getUser(name, password, accessToken)
+
+        console.log(userData, 'user data')
 
         res.status(201).send({message: `user ${name} authenticated successfully`})
-        const { accessToken, refreshToken } = generateTokenPair({name})
 
 
         console.log(accessToken, 'accessToken')

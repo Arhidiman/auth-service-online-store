@@ -19,9 +19,7 @@ const hash = (s: string) => {
 }
 
 app.use(express.json()); // Обработка JSON-запросов
-app.use('/user', AuthRouter)
-
-
+app.use('/api', AuthRouter)
 
 
 app.use(cors({

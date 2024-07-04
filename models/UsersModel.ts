@@ -5,6 +5,15 @@ const roles: {admin: 'administrator', user: "user"} = {
     user: "user"
 }
 
+
+// select username, user_id, user_role, jwt_token
+interface IUser {
+    username: string | undefined,
+    user_id: string | undefined,
+    user_role: string | undefined,
+    iwt_token: string | undefined
+}
+
 const userQuery = (username: string, password: string) => `
         select user_id 
         from store_users 
@@ -13,20 +22,26 @@ const userQuery = (username: string, password: string) => `
     `
 
 class UsersModel {
-    async createUser (name: string, password: string, accessToken: string) {
+    async createUser (username: string, password: string, accessToken: string): Promise<IUser | undefined> {
         console.log('create user')
 
-
-        const dbResponse = await pool.query(`
+        const createQuery = `
                 insert 
                 into store_users (username, password, jwt_token, user_role) 
-                values ('${name}', '${password}', '${accessToken}', '${roles.user}')
+                values ('${username}', '${password}', '${accessToken}', '${roles.user}')
+                returning username, user_id, user_role, jwt_token 
             `
-        )
+
+        const dbResponse = await pool.query(createQuery)
+
         console.log(dbResponse.rows, 'create user in db response')
+
+        return dbResponse.rows[0]
     }
 
-    async getUser (username: string, password: string, accessToken?: string) {
+
+
+    async getUser (username: string, password: string, accessToken?: string): Promise<IUser | undefined> {
         console.log('create user')
 
 

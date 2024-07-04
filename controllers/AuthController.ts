@@ -39,15 +39,15 @@ export class AuthController {
             const {username, password} = req.body
             const { accessToken, refreshToken } = generateTokenPair({username})
 
-            await usersModel.createUser(username, password, accessToken)
-            const userData = await usersModel.getUser(username, password, accessToken)
+            const userData = usersModel.createUser(username, password, accessToken)
+            // const userData = await usersModel.getUser(username, password, accessToken)
 
 
             console.log(userData, 'user data from auth service')
 
-            res.status(201).send({message: `user ${username} created successfully`, ...userData})
+            res.status(201).send(userData)
         } catch (err: any) {
-            res.status(402).send(`Ошибка создания пользователя. ${err.message}`)
+            res.status(err.data.code).send(`Ошибка создания пользователя. ${err.message}`)
             console.log(`Ошибка регистрации пользователя на сервисе аутентификации ${err.message}`)
         }
     }

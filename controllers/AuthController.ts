@@ -39,7 +39,7 @@ export class AuthController {
             const {username, password} = req.body
             const { accessToken, refreshToken } = generateTokenPair({username})
 
-            const userData = usersModel.createUser(username, password, accessToken)
+            const userData = await usersModel.createUser(username, password, accessToken)
             // const userData = await usersModel.getUser(username, password, accessToken)
 
 

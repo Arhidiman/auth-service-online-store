@@ -1,9 +1,13 @@
 const crypto = require('crypto')
 import fs from "fs";
 const jwt = require('jsonwebtoken')
-import type {Request, Response} from "express";
 import {usersModel} from "../models/UsersModel.ts"
 import {jwtConfig} from '../jwtConfig.ts'
+
+import type {Request, Response} from "express";
+import {HTTPError, THTTPErr} from "../lib";
+import {isHttpError} from "../lib";
+
 
 const hash = (s: string) => {
     return crypto.createHash('sha256').update(s).digest('hex')
@@ -40,15 +44,15 @@ export class AuthController {
             const { accessToken, refreshToken } = generateTokenPair({username})
 
             const userData = await usersModel.createUser(username, password, accessToken)
-            // const userData = await usersModel.getUser(username, password, accessToken)
-
-
-            console.log(userData, 'user data from auth service')
 
             res.status(201).send(userData)
         } catch (err: any) {
-            res.status(err.data.code).send(`Ошибка создания пользователя. ${err.message}`)
-            console.log(`Ошибка регистрации пользователя на сервисе аутентификации ${err.message}`)
+
+            if (isHttpError(err)) {
+                res.status(err.code).send(`Ошибка создания пользователя. ${err.message}`)
+            } else {
+                res.status(500).send(`Ошибка создания пользователя. ${err.message}`)
+            }
         }
     }
 

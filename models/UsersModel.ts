@@ -1,10 +1,31 @@
 import {pool} from "../db";
+import pg from 'pg'
+import {is} from "@babel/types";
+import {HTTPError, isPostgresError} from "../lib";
 
 const roles: {admin: 'administrator', user: "user"} = {
     admin: 'administrator',
     user: "user"
 }
 
+
+interface PostgresError extends Error {
+    code: string;
+    detail?: string;
+    hint?: string;
+    position?: string;
+    internalPosition?: string;
+    internalQuery?: string;
+    where?: string;
+    schema?: string;
+    table?: string;
+    column?: string;
+    dataType?: string;
+    constraint?: string;
+    file: string;
+    line: string;
+    routine: string;
+}
 
 // select username, user_id, user_role, jwt_token
 interface IUser {
@@ -13,6 +34,7 @@ interface IUser {
     user_role: string | undefined,
     iwt_token: string | undefined
 }
+
 
 const userQuery = (username: string, password: string) => `
         select user_id 
@@ -31,12 +53,33 @@ class UsersModel {
                 values ('${username}', '${password}', '${accessToken}', '${roles.user}')
                 returning username, user_id, user_role, jwt_token 
             `
+        try {
+            const dbResponse = await pool.query(createQuery)
 
-        const dbResponse = await pool.query(createQuery)
+            console.log(dbResponse.rows, 'create user in db response')
 
-        console.log(dbResponse.rows, 'create user in db response')
+            return dbResponse.rows[0]
+        } catch (err: any) {
 
-        return dbResponse.rows[0]
+            if (isPostgresError(err)) {
+                const pgError = err as PostgresError
+                if (pgError.code === '23505') {
+                    console.log(pgError)
+                    throw new HTTPError(`Пользователь с именем ${username} уже существует`, 400)
+                }
+                if (pgError.code === '22001') {
+                    console.log(pgError)
+                    throw new HTTPError(`Слишком длинное имя пользователя`, 400)
+                }
+                else {
+                    console.log(pgError)
+                    throw new HTTPError(`${err.message}`, 500)
+                }
+            }
+
+
+        }
+
     }
 
 
